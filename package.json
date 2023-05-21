@@ -58,7 +58,7 @@
     "vitest-dom": "^0.0.4"
   },
   "engines": {
-    "node": "20",
-    "yarn": "1.29"
+    "node": "20.x",
+    "yarn": "1.x"
   }
 }
