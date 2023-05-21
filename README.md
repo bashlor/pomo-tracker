@@ -1,7 +1,7 @@
 
 <h1 align="center"><a href="https://image-uploader.bashlor.software/">PomoTracker</a></h1>
 
-<div style="text-align:center"><img src="https://raw.githubusercontent.com/bashlor/pomo-tracker/main/pomotracker.jpg?token=GHSAT0AAAAAAB6RSEOMXAQXXMBOHUUKP24YZDJ66YA"></img></div>
+<p align="center"><img src="https://raw.githubusercontent.com/bashlor/pomo-tracker/main/pomotracker.jpg?token=GHSAT0AAAAAAB6RSEOMXAQXXMBOHUUKP24YZDJ66YA"></img></p>
 
 PomoTracker is a simple pomodoro timer that allows you to track your pomodoros and see your progress over time.
 This is a demo project for testing my React skills, learn basis of React Testing Library, Vitest and see how works a UI library like Grommet.
