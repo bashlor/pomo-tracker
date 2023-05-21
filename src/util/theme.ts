@@ -53,8 +53,9 @@ export const theme = deepMerge(grommet, {
   checkBox: {
     toggle: {
       background: '#cccccc',
+      color: '#FFF',
     },
-    color: '#FFF',
+    color: 'grey',
     border: {
       color: '#FFF',
     },

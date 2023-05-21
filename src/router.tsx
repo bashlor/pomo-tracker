@@ -11,25 +11,25 @@ export const routes = [
     path: '/',
     name: 'timer',
     element: <Timer />,
-    icon: <Clock />,
+    icon: <Clock color="#333333" />,
   },
   {
     path: '/timer',
     name: 'timer',
     element: <Timer />,
-    icon: <Clock />,
+    icon: <Clock color="#333333" />,
   },
   {
     path: '/tasks',
     name: 'tasks',
     element: <Tasks />,
-    icon: <Task />,
+    icon: <Task color="#333333" />,
   },
   {
     path: '/settings',
     name: 'settings',
     element: <Settings />,
-    icon: <UserSettings />,
+    icon: <UserSettings color="#333333" />,
   },
 ];
 
