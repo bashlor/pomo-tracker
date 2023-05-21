@@ -9,7 +9,7 @@ COPY *.mjs ./
 COPY *.ts ./
 
 RUN npm install -g npm@latest
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 FROM nginx:1.23.3-alpine
