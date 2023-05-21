@@ -3,6 +3,7 @@ ARG PORT
 WORKDIR /usr/src/app
 
 COPY package*.json ./
+COPY yarn.lock ./
 COPY public ./public/
 COPY src ./src/
 COPY *.mjs ./
