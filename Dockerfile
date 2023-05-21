@@ -5,12 +5,16 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 COPY yarn.lock ./
 COPY public ./public/
+COPY index.html ./
 COPY src ./src/
 COPY *.mjs ./
 COPY *.ts ./
+COPY tsconfig.json ./
+COPY tsconfig.node.json ./
+
 
 RUN yarn install
-RUN yarn build
+RUN yarn run build
 
 FROM nginx:1.23.3-alpine
 
