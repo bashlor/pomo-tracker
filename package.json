@@ -14,9 +14,6 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@syncfusion/ej2-base": "^21.2.3",
-    "@syncfusion/ej2-buttons": "^21.2.3",
-    "@syncfusion/ej2-react-schedule": "^21.2.4",
     "grommet": "^2.32.0",
     "grommet-icons": "^4.10.0",
     "jotai": "^2.1.0",
