@@ -1,4 +1,4 @@
-FROM node:20 as build-stage
+FROM node:18 as build-stage
 ARG PORT
 WORKDIR /usr/src/app
 
