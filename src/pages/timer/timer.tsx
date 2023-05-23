@@ -71,7 +71,7 @@ export function Timer() {
 
   return (
     <Page data-testid="timer-page" height="100vh">
-      <PageContent flex background={theme.global.colors[activeThemeColor].default} pad="medium">
+      <PageContent   background={theme.global.colors[activeThemeColor].default} pad="medium">
         <PageContentWrapper>
           <DateComponent dayTimeProvider={dayTimeProvider} />
           <Text textAlign="center" size="50px" data-testid="timer-mode">

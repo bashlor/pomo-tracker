@@ -5,7 +5,7 @@ export function PageContentWrapper({ children }: { children: ReactElement | Reac
   return (
     <Box
       style={{
-        width: 'min(80%, 540px)',
+        width: 'min(95%, 540px)',
         margin: '0 auto',
       }}
       alignSelf="center"
