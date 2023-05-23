@@ -1,5 +1,5 @@
 
-<h1 align="center"><a href="https://image-uploader.bashlor.software/">PomoTracker</a></h1>
+<h1 align="center"><a href="https://pomo-tracker.herokuapp.com/">PomoTracker</a></h1>
 
 <p align="center"><img src="https://raw.githubusercontent.com/bashlor/pomo-tracker/main/pomotracker.jpg?token=GHSAT0AAAAAAB6RSEOMXAQXXMBOHUUKP24YZDJ66YA"></img></p>
 
