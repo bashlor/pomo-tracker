@@ -1,4 +1,4 @@
-import { createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom';
 import App from './App';
 import { Timer } from './pages/timer/timer';
 import { Settings } from './pages/settings/settings';
@@ -34,11 +34,14 @@ export const routes = [
 ];
 
 export const routesReactRouter = createRoutesFromElements(
-  <Route element={<App />}>
-    {routes.map((route) => {
-      return <Route key={route.path} path={route.path} element={route.element} />;
-    })}
-  </Route>
+  <>
+    <Route element={<App />}>
+      {routes.map((route) => {
+        return <Route key={route.path} path={route.path} element={route.element} />;
+      })}
+      <Route path="*" element={<Navigate to="/" />} />
+    </Route>
+  </>
 );
 
 const router = createBrowserRouter(routesReactRouter);
