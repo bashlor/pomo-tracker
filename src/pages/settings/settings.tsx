@@ -17,8 +17,13 @@ import {
 } from 'grommet';
 import { SequenceInputBuilder } from '../../components/sequence-input-builder/sequence-input-builder';
 import { SimpleCheckbox } from '../../components/simple-checkbox/simple-checkbox';
-import { getTimerModeLabel, sequenceFromSettingsToTimerMode } from '../../helpers/pomodoro';
-import { ApplicationData, TimerMode } from '../../@types/app';
+import {
+  getTimerModeLabel,
+  labelToSingleCharMode,
+  sequenceFromSettingsToTimerMode,
+  singleCharModeToTimerMode,
+} from '../../helpers/pomodoro';
+import { ApplicationData, TimerMode, TimerModeCharType, TimerModeType } from '../../@types/app';
 import { getDefaultSettings, persistantSettingsKey } from '../../helpers/settings';
 import { activeColorThemeAtom } from '../../store/ui';
 import { useAtom } from 'jotai';
@@ -27,20 +32,24 @@ import { theme } from '../../util/theme';
 import { useDebounce, useLocalStorage } from 'usehooks-ts';
 
 import bellSound from '../../assets/bell.mp3';
-import { Settings as SettingType } from '../../@types/settings';
+import { Settings as SettingType, SettingsTypeObject } from '../../@types/settings';
 import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
 import { getDefaultApplicationData, persistentApplicationDataKey } from '../../helpers/application';
 import { toast } from 'react-toastify';
+import { ToastIds } from '../../util/toasts';
+
+const DEFAULT_MIN_SEQUENCE_DURATION_MINUTES = 1;
+const DEFAULT_MAX_SEQUENCE_DURATION_MINUTES = 120;
 export function Settings() {
-  const [settingsInfo, setSettingsInfo] = useLocalStorage<SettingType>(persistantSettingsKey, getDefaultSettings());
-  const [, setApplicationData] = useLocalStorage<ApplicationData>(persistentApplicationDataKey, getDefaultApplicationData());
-
-  const [activeThemeColor] = useAtom(activeColorThemeAtom);
   const [firstLoad, setFirstLoad] = useState(true);
+  const [settingsInfoFromStorage, setSettingsInfoInStorage] = useLocalStorage<SettingType>(persistantSettingsKey, getDefaultSettings());
+  const [editedSettings, setEditedSettings] = useState<SettingType>(settingsInfoFromStorage);
+  const [applicationData, setApplicationData] = useLocalStorage<ApplicationData>(persistentApplicationDataKey, getDefaultApplicationData());
+  const [activeThemeColor] = useAtom(activeColorThemeAtom);
 
-  const [volume, setVolume] = useState(settingsInfo.soundVolume || 0);
+  const [volume, setVolume] = useState(settingsInfoFromStorage.soundVolume || 0);
+
   const debouncedVolume = useDebounce<number>(volume, 300);
-
   const audio = new Audio(bellSound);
 
   function play() {
@@ -59,51 +68,123 @@ export function Settings() {
   }, [debouncedVolume]);
 
   const handleWorkDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettingsInfo({
-      ...settingsInfo,
+    setEditedSettings({
+      ...editedSettings,
       workDuration: Number(event.target.value),
     });
   };
 
   const handleShortBreakDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettingsInfo({
-      ...settingsInfo,
+    setEditedSettings({
+      ...editedSettings,
       shortBreakDuration: Number(event.target.value),
     });
   };
 
   const handleLongBreakDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettingsInfo({
-      ...settingsInfo,
+    setEditedSettings({
+      ...editedSettings,
       longBreakDuration: Number(event.target.value),
     });
   };
 
   const handleSequenceChange = (values: string[]) => {
-    const timerModeChars = values.map((timerMode) => timerMode[0]).join(' ');
+    const timerModeCharsResult = values.map((timerMode) => labelToSingleCharMode(timerMode));
 
-    setSettingsInfo({
-      ...settingsInfo,
+    const errorFound = timerModeCharsResult.find((timerModeChar) => timerModeChar.isErr());
+
+    if (errorFound?.isErr()) {
+      console.error(errorFound.error);
+      toast.error('Unexpected error', {
+        toastId: ToastIds.UserSettings,
+      });
+    }
+
+    //At this point we know that all the values are valid
+    const timerModeChars = timerModeCharsResult.map((timerModeChar) => timerModeChar.unwrapOr('B')).join(' ');
+
+    setEditedSettings({
+      ...editedSettings,
       sequence: timerModeChars,
     });
+
+    return;
   };
 
   const handleAutoStartNextSequenceChange = (newValue: boolean) => {
-    setSettingsInfo({
-      ...settingsInfo,
+    setEditedSettings({
+      ...editedSettings,
       autoStartNextSequence: newValue,
     });
   };
 
   const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettingsInfo({
-      ...settingsInfo,
+    setEditedSettings({
+      ...editedSettings,
       soundVolume: Number(event.target.value),
     });
     setVolume(Number(event.target.value));
   };
 
-  const prettySequence = sequenceFromSettingsToTimerMode(settingsInfo)
+  const handleSettingsReset = () => {
+    setSettingsInfoInStorage(getDefaultSettings());
+    setEditedSettings(getDefaultSettings());
+    toast.info('Settings reset', {
+      toastId: ToastIds.UserSettings,
+    });
+  };
+
+  const handleUserDataDeletion = () => {
+    setApplicationData(getDefaultApplicationData());
+    toast.info('Data removed', {
+      toastId: ToastIds.UserApplicationData,
+    });
+  };
+
+  const handleSaveSettings = () => {
+    try {
+      SettingsTypeObject.parse(editedSettings);
+
+      const timerModeChars = editedSettings.sequence;
+
+      //Update the sequence index if the new sequence is shorter than the current one, so that the sequence index is not out of bounds
+      const sequenceLength = timerModeChars.split(' ').length;
+      if (applicationData.sequenceIndex >= sequenceLength) {
+        const newTimerModeChar = timerModeChars.split(' ')[applicationData.sequenceIndex % sequenceLength] as TimerModeCharType;
+
+        //At this point we know that the new sequence is not empty, so we can safely unwrap the result
+        const newTimerMode = singleCharModeToTimerMode(newTimerModeChar).unwrapOr(null);
+
+        if (!newTimerMode) {
+          console.error('Failed to save sequence, unexpected error');
+          toast.error('Failed to save sequence', {
+            toastId: ToastIds.UserSettings,
+          });
+        }
+
+        setApplicationData({
+          ...applicationData,
+          sequenceIndex: applicationData.sequenceIndex % sequenceLength,
+          timerMode: newTimerMode as TimerModeType,
+        });
+      }
+
+      setSettingsInfoInStorage(editedSettings);
+
+      toast.success('Settings saved', {
+        toastId: ToastIds.UserSettings,
+      });
+    } catch (error) {
+      // We only want retrieves errors with custom messages
+      const errors = error.errors.filter((error: any) => error.code === 'custom');
+      const firstErrorMessage = errors[0].message ?? 'Failed to save settings';
+      toast.error(firstErrorMessage, {
+        toastId: ToastIds.UserSettings,
+      });
+    }
+  };
+
+  const prettySequence = sequenceFromSettingsToTimerMode(editedSettings)
     .unwrapOr([] as TimerMode[])
     .map((timerModeStringValue: TimerMode) => getTimerModeLabel(timerModeStringValue).unwrapOr('error'));
 
@@ -126,19 +207,19 @@ export function Settings() {
                         type="range"
                         id="work-duration"
                         onChange={handleWorkDurationChange}
-                        defaultValue={settingsInfo.workDuration}
+                        value={editedSettings.workDuration}
                         style={{ maxWidth: '70%' }}
-                        min={1}
-                        max={120}
+                        min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                        max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                       />
                       <Box>
                         <TextInput
                           type="number"
                           width="60px"
-                          value={settingsInfo.workDuration}
+                          value={editedSettings.workDuration}
                           onChange={handleWorkDurationChange}
-                          min={1}
-                          max={120}
+                          min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                          max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                         ></TextInput>
                       </Box>
                     </Box>
@@ -148,23 +229,23 @@ export function Settings() {
                     <Box flex direction="row" align="center" justify="between">
                       <RangeInput
                         data-testid="short-break-duration-input"
-                        name="short-break-duration"
+                        name="short-break"
                         type="range"
-                        id="short-break-duration"
+                        id="short-break"
                         onChange={handleShortBreakDurationChange}
-                        defaultValue={settingsInfo.shortBreakDuration}
+                        value={editedSettings.shortBreakDuration}
                         style={{ maxWidth: '70%' }}
-                        min={1}
-                        max={settingsInfo.workDuration}
+                        min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                        max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                       />
                       <Box>
                         <TextInput
                           type="number"
                           width="60px"
-                          value={settingsInfo.shortBreakDuration}
+                          value={editedSettings.shortBreakDuration}
                           onChange={handleShortBreakDurationChange}
-                          min={1}
-                          max={settingsInfo.workDuration}
+                          min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                          max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                         ></TextInput>
                       </Box>
                     </Box>
@@ -178,25 +259,25 @@ export function Settings() {
                         type="range"
                         id="long-break-duration"
                         onChange={handleLongBreakDurationChange}
-                        defaultValue={settingsInfo.longBreakDuration}
+                        value={editedSettings.longBreakDuration}
                         style={{ maxWidth: '70%' }}
-                        min={1}
-                        max={settingsInfo.workDuration}
+                        min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                        max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                       />
                       <Box>
                         <TextInput
                           type="number"
                           width="60px"
-                          value={settingsInfo.longBreakDuration}
-                          min={1}
-                          max={settingsInfo.workDuration}
+                          value={editedSettings.longBreakDuration}
+                          min={DEFAULT_MIN_SEQUENCE_DURATION_MINUTES}
+                          max={DEFAULT_MAX_SEQUENCE_DURATION_MINUTES}
                           onChange={handleLongBreakDurationChange}
                         ></TextInput>
                       </Box>
                     </Box>
                   </FormField>
                   <SimpleCheckbox
-                    initialValue={settingsInfo.autoStartNextSequence}
+                    initialValue={editedSettings.autoStartNextSequence}
                     reverse={true}
                     toggle={true}
                     fill={true}
@@ -218,12 +299,12 @@ export function Settings() {
                   label="Sound"
                   style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}
                 >
-                  <Select width="150px" disabled={true} value={settingsInfo.soundName} options={['bell']} id="sound-input" name="sound" />
+                  <Select width="150px" disabled={true} value={editedSettings.soundName} options={['bell']} id="sound-input" name="sound" />
                 </FormField>
                 <FormField
                   name="sound-volume"
                   htmlFor="sound-volume-input"
-                  label={settingsInfo.soundVolume === 0 ? 'Sound volume (muted)' : 'Sound volume'}
+                  label={editedSettings.soundVolume === 0 ? 'Sound volume (muted)' : 'Sound volume'}
                 >
                   <Box flex direction="row" align="center" justify="between">
                     <RangeInput
@@ -232,46 +313,32 @@ export function Settings() {
                       type="range"
                       id="sound-volume-input"
                       style={{ maxWidth: '70%' }}
-                      value={settingsInfo.soundVolume}
+                      value={editedSettings.soundVolume}
                       onChange={handleVolumeChange}
                       min={0}
                       max={100}
                     />
                     <Box>
-                      <TextInput width="60px" value={settingsInfo.soundVolume} />
+                      <TextInput width="60px" type="number" onChange={handleVolumeChange} value={editedSettings.soundVolume} />
                     </Box>
                   </Box>
                 </FormField>
               </Form>
             </CardBody>
             <CardFooter>
-              <Box pad="medium" flex direction="row" justify="end" gap="10px">
-                <Button
-                  primary={true}
-                  label="Reset Settings"
-                  onClick={() => {
-                    setSettingsInfo(getDefaultSettings());
-                    toast.info('Settings reset', {
-                      autoClose: 2000,
-                      toastId: 'reset-settings-toast',
-                    });
-                  }}
-                  data-testid="reset-button"
-                />
-                <Button
-                  primary={true}
-                  style={{
-                    backgroundColor: theme.global.colors['red'].dark,
-                  }}
-                  label="Reset Data"
-                  onClick={() => {
-                    setApplicationData(getDefaultApplicationData());
-                    toast.info('Data removed', {
-                      autoClose: 2000,
-                      toastId: 'reset-data-toast',
-                    });
-                  }}
-                />
+              <Box pad="medium" flex direction="row" justify="between" gap="10px">
+                <Box flex direction="row" justify="start" gap="10px">
+                  <Button primary={true} label="Reset Settings" onClick={() => handleSettingsReset()} />
+                  <Button
+                    primary={true}
+                    style={{
+                      backgroundColor: theme.global.colors['red'].dark,
+                    }}
+                    label="Delete Data"
+                    onClick={() => handleUserDataDeletion()}
+                  />
+                </Box>
+                <Button primary={true} label="Save" onClick={handleSaveSettings} data-testid="reset-button" />
               </Box>
             </CardFooter>
           </Card>

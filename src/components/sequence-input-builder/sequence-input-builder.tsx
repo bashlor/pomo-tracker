@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { TimerModeTypeObject } from '../../@types/app';
 import { getTimerModeLabel } from '../../helpers/pomodoro';
 import { TagInput } from '../tag-input/tag-input';
