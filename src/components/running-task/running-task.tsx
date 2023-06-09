@@ -1,26 +1,29 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import { ApplicationData } from '../../@types/app';
 import { getDefaultApplicationData, persistentApplicationDataKey } from '../../helpers/application';
 import { Card, TextInput, Text, CardBody, CardHeader } from 'grommet';
 
-export function RunningTask({ taskName }: { taskName?: string }) {
+export function RunningTask({initialTaskName}:{initialTaskName:string}) {
   const [appState, setAppState] = useLocalStorage<ApplicationData>(persistentApplicationDataKey, getDefaultApplicationData());
-  const [name, setName] = useState(taskName || getDefaultApplicationData().currentTaskName);
+  const [name, setName] = useState(initialTaskName || getDefaultApplicationData().currentTaskName);
   const [tasksSuggestions, setTasksSuggestions] = useState<string[]>(appState.tasks);
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value.trim());
-    if (event.target.value.trim().length > 0) {
-      setAppState({ ...appState, currentTaskName: event.target.value.trim() });
-    }
-  };
+  const inputRef = useRef<null | HTMLInputElement>(null);
 
   useEffect(() => {
-    if (taskName) {
-      setName(taskName);
-      setTasksSuggestions(appState.tasks.filter((task) => task.toLowerCase().includes(taskName.toLowerCase())));
+    if (name) {
+      setTasksSuggestions(appState.tasks.filter((task) => task.toLowerCase().includes(name.toLowerCase())));
+      setAppState({ ...appState, currentTaskName: name.trim() });
     }
-  }, [taskName]);
+  }, [name]);
+
+  const handleFocus = () => {
+    const input = inputRef.current;
+    if (input) {
+      const length = input.value.length;
+      input.setSelectionRange(length, length);
+    }
+  };
 
   return (
     <Card pad="medium" background="#FFF" data-testid="running-task">
@@ -34,8 +37,10 @@ export function RunningTask({ taskName }: { taskName?: string }) {
           value={name}
           id="name"
           type="text"
-          onChange={handleNameChange}
+          onChange={(event) => setName(event.target.value)}
           onSuggestionSelect={(target) => setName(target.suggestion)}
+          onFocus={handleFocus}
+          ref={inputRef}
         />
       </CardBody>
     </Card>
