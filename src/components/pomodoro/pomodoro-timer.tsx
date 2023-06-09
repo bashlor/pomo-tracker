@@ -20,6 +20,8 @@ import { theme } from '../../util/theme';
 import { activeColorThemeAtom } from '../../store/ui';
 
 import bellSound from '../../assets/bell.mp3';
+import { toast } from 'react-toastify';
+import { ToastIds } from '../../util/toasts';
 
 export function PomodoroTimer({ initialTime, linkSessionToTask }: { initialTime: number; linkSessionToTask: boolean }) {
   const [startedDate, setStartedDate] = useState<Date | null>(null);
@@ -41,11 +43,21 @@ export function PomodoroTimer({ initialTime, linkSessionToTask }: { initialTime:
   const timerText = useMemo(() => computeTimerText(remainingTime), [remainingTime]);
 
   const startHandler = () => {
+    toast.info('Timer started', {
+      toastId: ToastIds.TimerStatus,
+      position: 'bottom-right',
+      autoClose: 1000
+    });
     setIsRunning(true);
     setStartedDate(new Date());
   };
 
   const stopHandler = () => {
+    toast.info('Timer stopped', {
+      toastId: ToastIds.TimerStatus,
+      position: 'bottom-right',
+      autoClose: 1000
+    });
     setIsRunning(false);
     setRemainingTime(initialTime);
     setAppData((appData) => ({ ...appData, currentSequenceId: nanoid() }));
@@ -61,8 +73,8 @@ export function PomodoroTimer({ initialTime, linkSessionToTask }: { initialTime:
 
     if (startedDate) {
       const newApplicationDataResult = returnApplicationDataWithNextSequence(settings, appData, startedDate, new Date(), linkSessionToTask);
-      console.log(newApplicationDataResult);
       if (newApplicationDataResult.isErr()) {
+        console.error('unable to initialize next timer sequence');
         return;
       }
 
@@ -86,7 +98,15 @@ export function PomodoroTimer({ initialTime, linkSessionToTask }: { initialTime:
         setRemainingTime((remainingTime) => (remainingTime > 0 ? remainingTime - 1 : 0));
       }, 1000);
       setTimerId(interval);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        toast.info('Timer stopped', {
+          toastId: ToastIds.TimerStatus,
+          position: 'bottom-right',
+          autoClose: 1000
+        });
+        setIsRunning(false);
+      };
     }
   }, [isRunning]);
 

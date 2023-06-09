@@ -23,6 +23,19 @@ export function getWorkDurationInSeconds(settings: Settings) {
   return settings.workDuration * 60;
 }
 
+export function labelToSingleCharMode(label: string): Result<TimerModeCharType, Error> {
+  switch (label) {
+    case 'Work':
+      return ok('W');
+    case 'Short Break':
+      return ok('B');
+    case 'Long Break':
+      return ok('L');
+    default:
+      return err(new Error(`Invalid timer mode ${label}`));
+  }
+}
+
 export function singleCharModeToTimerMode(mode: TimerModeCharType): Result<TimerModeType, Error> {
   switch (mode) {
     case 'W':
@@ -79,7 +92,7 @@ export function returnApplicationDataWithNextSequence(
     pomodoroSequences: applicationData.pomodoroSequences,
     currentTaskName: applicationData.currentTaskName,
     currentSequenceId: applicationData.currentSequenceId,
-    tasks: linkSessionToTask ? [...applicationData.tasks, applicationData.currentTaskName] : applicationData.tasks,
+    tasks: linkSessionToTask ? [...new Set([...applicationData.tasks, applicationData.currentTaskName])] : applicationData.tasks,
     version: import.meta.env.VITE_APP_VERSION,
   };
 

@@ -69,9 +69,10 @@ export function Timer() {
     setActiveThemeColor(newColorTheme);
   };
 
+
   return (
     <Page data-testid="timer-page" height="100vh">
-      <PageContent   background={theme.global.colors[activeThemeColor].default} pad="medium">
+      <PageContent background={theme.global.colors[activeThemeColor].default} pad="medium">
         <PageContentWrapper>
           <DateComponent dayTimeProvider={dayTimeProvider} />
           <Text textAlign="center" size="50px" data-testid="timer-mode">
@@ -90,7 +91,7 @@ export function Timer() {
             onClick={skipToNextSequence}
             nextTimerModeLabel={getTimerModeLabel(computedNextTimerMode).unwrapOr('error')}
           />
-          {linkSessionToTask && !isTimerRunning ? <RunningTask taskName={appData.currentTaskName} /> : undefined}
+          {linkSessionToTask && !isTimerRunning ? <RunningTask initialTaskName={appData.currentTaskName} /> : undefined}
           {linkSessionToTask && isTimerRunning ? <TaskCard taskName={appData.currentTaskName} /> : undefined}
         </PageContentWrapper>
       </PageContent>
