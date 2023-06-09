@@ -1,4 +1,4 @@
-import { Page, PageContent, PageHeader } from 'grommet';
+import { Card, CardBody, Page, PageContent, PageHeader } from 'grommet';
 import { useEffect } from 'react';
 import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
 import { theme } from '../../util/theme';
@@ -26,7 +26,14 @@ export function Tasks() {
       <PageContent style={{ overflowY: 'scroll', display: 'unset' }} pad="medium" width="100%" flex justify="between">
         <PageContentWrapper>
           <PageHeader title="Tasks" />
-          <TaskList taskList={userData.tasks} onChange={(tasks) => updateTasks(tasks)} />
+          {userData.tasks.length > 0 && <TaskList taskList={userData.tasks} onChange={(tasks) => updateTasks(tasks)} />}
+          {userData.tasks.length === 0 && (
+            <Card pad="medium" background="#FFF">
+              <CardBody>
+                <p>There are no created tasks yet.</p>
+              </CardBody>
+            </Card>
+          )}
         </PageContentWrapper>
       </PageContent>
     </Page>
