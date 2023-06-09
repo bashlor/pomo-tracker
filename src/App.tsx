@@ -36,7 +36,7 @@ function App() {
     <Box background={theme.global.colors[activeThemeColor].default} onClick={closeMenuOnClick} height="100vh">
       <ToastContainer
         position="top-center"
-        autoClose={3000}
+        autoClose={2000}
         hideProgressBar={true}
         newestOnTop={false}
         closeOnClick
