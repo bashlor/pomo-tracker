@@ -1,4 +1,4 @@
-<h1 align="center"><a href="https://pomo-tracker.herokuapp.com/">PomoTracker</a></h1>
+<h1 align="center"><a href="https://pomotracker.elie-patrice.fr/">PomoTracker</a></h1>
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/bashlor/pomo-tracker/main/screen_1.png" width="400"  alt="screenshot_1"/>
@@ -31,7 +31,7 @@ This is a demo project for testing my React skills, learn basis of React Testing
 - React Testing Library
 - Vitest
 
-The application has been deployed with Heroku and can be found [here](https://pomo-tracker.herokuapp.com/).
+The application has been deployed and can be found [here](https://pomotracker.elie-patrice.fr/).
 
 ## Future Features
 
